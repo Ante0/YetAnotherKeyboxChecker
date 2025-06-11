@@ -7,9 +7,9 @@ from cryptography import x509
 from cryptography.hazmat.backends import default_backend
 from collections import defaultdict
 
-def get_online_serial_list(url):
+def get_online_serial_list():
     try:
-        response = requests.get(url, headers={'Cache-Control': 'no-cache'}, timeout=10)
+        response = requests.get("https://android.googleapis.com/attestation/status?" + str(int(time.time())), headers={'Cache-Control': 'no-cache'}, timeout=10)
         response.raise_for_status()
         return set(
             re.sub(r'[^a-f0-9]', '', line.strip().lower())
@@ -17,8 +17,8 @@ def get_online_serial_list(url):
             if line.strip()
         )
     except Exception as e:
-        print(f"Error downloading online Attestation list: {str(e)}")
-        return set()
+        print(f"Error downloading online Attestation list: {e}")
+        exit(1)
 
 def process_certificate(cert_pem, online_serials):
     try:
@@ -42,7 +42,6 @@ def process_certificate(cert_pem, online_serials):
         return None, None, False
 
 def main():
-    ONLINE_LIST_URL = "https://android.googleapis.com/attestation/status?" + str(int(time.time()))
     SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
     
     found_count = 0
@@ -50,7 +49,7 @@ def main():
     files_with_matches = defaultdict(list)
 
     print("\nDownloading online Attestation list...")
-    online_serials = get_online_serial_list(ONLINE_LIST_URL)
+    online_serials = get_online_serial_list()
 
     xml_files = [f for f in os.listdir(SCRIPT_DIR) if f.lower().endswith('.xml')]
     
